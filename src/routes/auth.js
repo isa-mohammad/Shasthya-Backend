@@ -36,6 +36,10 @@ const resetPasswordSchema = z.object({
   password: z.string().min(8),
 });
 
+const resetVerifySchema = z.object({
+  token_hash: z.string().min(1),
+});
+
 // POST /auth/signup — email + password
 router.post('/signup', validate(signupSchema), async (req, res) => {
   const { email, password, name, lang } = req.body;
@@ -145,6 +149,27 @@ router.post('/password/reset-request', validate(resetRequestSchema), async (req,
   if (error) return res.status(400).json({ error: error.message });
 
   res.json({ message: 'Password reset email sent' });
+});
+
+// POST /auth/password/reset-verify — exchange token_hash from email link for a session
+// Frontend calls this after user lands on the reset-password page with ?token_hash=xxx&type=recovery
+router.post('/password/reset-verify', validate(resetVerifySchema), async (req, res) => {
+  const { token_hash } = req.body;
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    token_hash,
+    type: 'recovery',
+  });
+
+  if (error || !data.session) {
+    return res.status(401).json({ error: 'Invalid or expired reset link' });
+  }
+
+  // Return a short-lived session — frontend uses access_token to call /password/update
+  res.json({
+    access_token: data.session.access_token,
+    expires_at: data.session.expires_at,
+  });
 });
 
 // POST /auth/password/update — update password (requires valid session)

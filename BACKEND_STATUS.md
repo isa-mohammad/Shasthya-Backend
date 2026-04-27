@@ -147,12 +147,12 @@
 - [ ] `DELETE /push/subscribe` — unsubscribe
 - [ ] Push dispatch helper (used by cron jobs + events)
 
-### Cron Jobs — `src/cron/` (not created)
-- [ ] Reminder dispatch — fire at scheduled times from `reminders` table
-- [ ] Appointment reminder — notify patient + doctor 1hr before slot
-- [ ] No-show flagging — auto-cancel if appointment stays `confirmed` X minutes past slot end
-- [ ] Slot auto-generation — generate `doctor_slots` rows from `doctor_schedules` (e.g. 2 weeks ahead)
-- [ ] Lock expiry cleanup — free slots whose `locked_until` has passed (fallback to DB trigger)
+### Cron Jobs — `src/cron/`
+- [x] Slot auto-generation — daily midnight, generates 14 days of slots from schedules (`src/cron/jobs/generateSlots.js`)
+- [x] Appointment reminders — hourly, notifies patient + doctor 1hr before slot (`src/cron/jobs/appointmentReminders.js`)
+- [x] No-show flagging — every 15min, marks confirmed appointments as no_show after 30min grace period (`src/cron/jobs/flagNoShows.js`)
+- [x] Medicine reminder dispatch — every minute, fires at exact scheduled times (`src/cron/jobs/medicineReminders.js`)
+- [ ] Lock expiry cleanup — free slots whose `locked_until` has passed (currently handled by slot availability query)
 
 ### AI Endpoints — `src/routes/ai.js`
 - [x] `POST /api/ai/chat` — Dr. Sasthya chatbot (Claude Haiku, streaming SSE, chat history persisted)

@@ -21,6 +21,7 @@ import contactRouter from './routes/contact.js';
 import adminRouter from './routes/admin.js';
 import telemedicineRouter from './routes/telemedicine.js';
 import aiRouter from './routes/ai.js';
+import { startCronJobs } from './cron/index.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -98,4 +99,5 @@ app.use((err, req, res, next) => {
 
 app.listen(port, () => {
   console.log(`Sasthya Sathi backend listening on http://localhost:${port}`);
+  startCronJobs();
 });

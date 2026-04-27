@@ -17,6 +17,7 @@
     "express-rate-limit": "^7.4.0",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
+    "node-cron": "^4.2.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {

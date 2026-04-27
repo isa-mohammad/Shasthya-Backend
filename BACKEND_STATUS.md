@@ -37,6 +37,10 @@
 - [x] Update own doctor profile
 - [x] Weekly schedule CRUD (`GET/POST/PATCH/DELETE /doctors/me/schedules`)
 - [x] Manual slot creation (`POST /doctors/me/slots`)
+- [x] Upload BMDC/verification docs (`POST /doctors/me/docs/upload-url` → `POST /doctors/me/docs`)
+- [x] List own docs (`GET /doctors/me/docs`)
+- [x] Delete own doc (`DELETE /doctors/me/docs/:docId`)
+- [x] Admin views doctor docs with signed URLs (`GET /admin/doctors/:id/docs`)
 
 ### Appointments — `src/routes/appointments.js`
 - [x] Patient — list own appointments (filter by status)
@@ -65,6 +69,8 @@
 - [x] Patient lists own prescriptions
 - [x] Patient / doctor gets single prescription
 - [x] Doctor lists own issued prescriptions
+- [x] Doctor uploads PDF file to prescription (`POST /prescriptions/:id/upload-url` → `PATCH /prescriptions/:id/file`)
+- [x] Patient / doctor gets fresh signed download URL (`GET /prescriptions/:id/file`)
 
 ### Articles — `src/routes/articles.js`
 - [x] Public listing (search, category, tag filter) + pagination

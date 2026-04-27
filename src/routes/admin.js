@@ -128,6 +128,29 @@ router.patch('/users/:id/role', validate(z.object({ role: z.enum(['patient', 'do
   res.json({ message: `Role ${role} ${action}ed` });
 });
 
+// ── Doctor documents (BMDC verification) ────────────────────────
+router.get('/doctors/:id/docs', async (req, res) => {
+  const { data: docs, error } = await supabase
+    .from('doctor_documents')
+    .select('*')
+    .eq('doctor_id', req.params.id)
+    .order('uploaded_at', { ascending: false });
+
+  if (error) return dbError(res, error);
+
+  // Attach fresh 1-hour signed URLs for each doc
+  const withUrls = await Promise.all(
+    docs.map(async (doc) => {
+      const { data } = await supabase.storage
+        .from('doctor-docs')
+        .createSignedUrl(doc.file_path, 3600);
+      return { ...doc, signed_url: data?.signedUrl ?? null };
+    })
+  );
+
+  res.json(withUrls);
+});
+
 // ── Community moderation ─────────────────────────────────────────
 router.get('/community/reported', async (req, res) => {
   const { data, error } = await supabase

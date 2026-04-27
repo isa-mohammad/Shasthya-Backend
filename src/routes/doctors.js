@@ -256,4 +256,79 @@ router.post('/me/slots', requireAuth, requireRole('doctor'), async (req, res) =>
   res.status(201).json(data);
 });
 
+// POST /doctors/me/docs/upload-url — get signed URL to upload a BMDC/verification doc
+router.post('/me/docs/upload-url', requireAuth, async (req, res) => {
+  const { file_name, doc_type = 'bmdc' } = req.body;
+  if (!file_name) return res.status(400).json({ error: 'file_name required' });
+
+  const { data: doctor } = await supabase
+    .from('doctors').select('id').eq('user_id', req.user.id).single();
+  if (!doctor) return notFound(res, 'Doctor profile');
+
+  const ext = file_name.split('.').pop();
+  const path = `${req.user.id}/${doc_type}-${Date.now()}.${ext}`;
+
+  const { data, error } = await supabase.storage
+    .from('doctor-docs')
+    .createSignedUploadUrl(path);
+
+  if (error) return dbError(res, error);
+  res.json({ upload_url: data.signedUrl, path, doc_type });
+});
+
+// POST /doctors/me/docs — save doc metadata after upload
+router.post('/me/docs', requireAuth, async (req, res) => {
+  const { file_name, path, doc_type = 'bmdc' } = req.body;
+  if (!file_name || !path) return res.status(400).json({ error: 'file_name and path required' });
+
+  const { data: doctor } = await supabase
+    .from('doctors').select('id').eq('user_id', req.user.id).single();
+  if (!doctor) return notFound(res, 'Doctor profile');
+
+  const { data, error } = await supabase
+    .from('doctor_documents')
+    .insert({ doctor_id: doctor.id, file_name, file_path: path, doc_type })
+    .select()
+    .single();
+
+  if (error) return dbError(res, error);
+  res.status(201).json(data);
+});
+
+// GET /doctors/me/docs — list own uploaded docs
+router.get('/me/docs', requireAuth, async (req, res) => {
+  const { data: doctor } = await supabase
+    .from('doctors').select('id').eq('user_id', req.user.id).single();
+  if (!doctor) return notFound(res, 'Doctor profile');
+
+  const { data, error } = await supabase
+    .from('doctor_documents')
+    .select('*')
+    .eq('doctor_id', doctor.id)
+    .order('uploaded_at', { ascending: false });
+
+  if (error) return dbError(res, error);
+  res.json(data);
+});
+
+// DELETE /doctors/me/docs/:docId — delete own doc
+router.delete('/me/docs/:docId', requireAuth, async (req, res) => {
+  const { data: doctor } = await supabase
+    .from('doctors').select('id').eq('user_id', req.user.id).single();
+  if (!doctor) return notFound(res, 'Doctor profile');
+
+  const { data: doc } = await supabase
+    .from('doctor_documents').select('file_path').eq('id', req.params.docId).eq('doctor_id', doctor.id).single();
+  if (!doc) return notFound(res, 'Document');
+
+  // Delete from storage
+  await supabase.storage.from('doctor-docs').remove([doc.file_path]);
+
+  const { error } = await supabase
+    .from('doctor_documents').delete().eq('id', req.params.docId);
+
+  if (error) return dbError(res, error);
+  res.status(204).send();
+});
+
 export default router;
